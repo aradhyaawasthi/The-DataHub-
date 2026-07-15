@@ -6,103 +6,105 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Custom Middleware
-app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();
-});
-
-// In-Memory Database
 let posts = [];
 
-// Home Route
+// Middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+// Home
 app.get("/", (req, res) => {
-    res.json({
-        success: true,
-        message: "The DataHub API is Running!"
-    });
+  res.json({
+    success: true,
+    message: "The DataHub API is Running!"
+  });
 });
 
-// GET All Posts
+// Get All Posts
 app.get("/posts", (req, res) => {
-    res.json(posts);
+  res.json(posts);
 });
 
-// GET Single Post
-app.get("/posts/:id", (req, res) => {
-
-    const id = parseInt(req.params.id);
-
-    const post = posts.find(p => p.id === id);
-
-    if (!post) {
-        return res.status(404).json({
-            message: "Post not found"
-        });
-    }
-
-    res.json(post);
-
-});
-
-// CREATE Post
+// Create Post
 app.post("/posts", (req, res) => {
 
-    const { title, content } = req.body;
+  const { title, content } = req.body;
 
-    const newPost = {
-        id: posts.length + 1,
-        title,
-        content
-    };
+  const newPost = {
+    id: Date.now(),
+    title,
+    content
+  };
 
-    posts.push(newPost);
+  posts.push(newPost);
 
-    res.status(201).json({
-        message: "Post created successfully",
-        post: newPost
+  res.status(201).json({
+    success: true,
+    message: "Post Created Successfully",
+    post: newPost
+  });
+
+});
+// Get Single Post
+app.get("/posts/:id", (req, res) => {
+
+  const id = parseInt(req.params.id);
+
+  const post = posts.find(p => p.id === id);
+
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: "Post not found"
     });
+  }
+
+  res.json(post);
 
 });
 
-// UPDATE Post
+// Update Post
 app.put("/posts/:id", (req, res) => {
 
-    const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id);
 
-    const { title, content } = req.body;
+  const { title, content } = req.body;
 
-    const post = posts.find(p => p.id === id);
+  const post = posts.find(p => p.id === id);
 
-    if (!post) {
-        return res.status(404).json({
-            message: "Post not found"
-        });
-    }
-
-    post.title = title;
-    post.content = content;
-
-    res.json({
-        message: "Post updated successfully",
-        post
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: "Post not found"
     });
+  }
+
+  post.title = title;
+  post.content = content;
+
+  res.json({
+    success: true,
+    message: "Post Updated Successfully",
+    post
+  });
 
 });
 
-// DELETE Post
+// Delete Post
 app.delete("/posts/:id", (req, res) => {
 
-    const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id);
 
-    posts = posts.filter(post => post.id !== id);
+  posts = posts.filter(p => p.id !== id);
 
-    res.json({
-        message: "Post deleted successfully"
-    });
+  res.json({
+    success: true,
+    message: "Post Deleted Successfully"
+  });
 
 });
-
 // Mock Login API
 app.post("/login", (req, res) => {
 
@@ -123,4 +125,5 @@ app.post("/login", (req, res) => {
 
 });
 
+// Export App for Vercel
 module.exports = app;
