@@ -1,10 +1,12 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "../public")));
 
 let posts = [];
 
@@ -16,10 +18,7 @@ app.use((req, res, next) => {
 
 // Home
 app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "The DataHub API is Running!"
-  });
+    res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
 // Get All Posts
