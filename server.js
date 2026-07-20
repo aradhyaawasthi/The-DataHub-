@@ -91,6 +91,40 @@ app.get("/posts", async (req, res) => {
 
 });
 
+// TOP 3 RECENT POSTS (Aggregation)
+
+app.get("/posts/top/recent", async (req, res) => {
+
+    try {
+
+        const posts = await Post.aggregate([
+            {
+                $sort: {
+                    createdAt: -1
+                }
+            },
+            {
+                $limit: 3
+            }
+        ]);
+
+        res.json({
+            success: true,
+            message: "Top 3 Recent Posts",
+            data: posts
+        });
+
+
+    } catch(error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+});
 
 // GET Single Post
 app.get("/posts/:id", async (req, res) => {
@@ -196,40 +230,6 @@ app.put("/posts/:id", async (req, res) => {
     }
 });
 
-// TOP 3 RECENT POSTS (Aggregation)
-
-app.get("/posts/top/recent", async (req, res) => {
-
-    try {
-
-        const posts = await Post.aggregate([
-            {
-                $sort: {
-                    createdAt: -1
-                }
-            },
-            {
-                $limit: 3
-            }
-        ]);
-
-        res.json({
-            success: true,
-            message: "Top 3 Recent Posts",
-            data: posts
-        });
-
-
-    } catch(error) {
-
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-
-    }
-
-});
 // DELETE Post
 app.delete("/posts/:id", async (req,res)=>{
 
