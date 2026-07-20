@@ -1,8 +1,23 @@
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
+const mongoose = require("mongoose");
+const Post = require("./models/Post");
+const User = require("./models/User");
 
 const app = express();
-const PORT = 5000;
+
+const PORT = process.env.PORT || 5000;
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI)
+.then(() => {
+    console.log("✅ MongoDB Connected Successfully");
+})
+.catch((err) => {
+    console.log("❌ MongoDB Connection Failed");
+    console.log(err);
+});
 
 // Middleware
 app.use(cors());
@@ -14,8 +29,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// In-Memory Database
-let posts = [];
 
 // Home Route
 app.get("/", (req, res) => {
@@ -24,91 +37,235 @@ app.get("/", (req, res) => {
         message: "The DataHub API is Running!"
     });
 });
+// CREATE USER
 
-// GET All Posts
-app.get("/posts", (req, res) => {
-    res.json(posts);
-});
+app.post("/users", async (req, res) => {
 
-// GET Single Post
-app.get("/posts/:id", (req, res) => {
+    try {
 
-    const id = parseInt(req.params.id);
+        const { name, email } = req.body;
 
-    const post = posts.find(p => p.id === id);
-
-    if (!post) {
-        return res.status(404).json({
-            success: false,
-            message: "Post not found"
+        const newUser = await User.create({
+            name,
+            email
         });
+
+        res.status(201).json({
+            success: true,
+            message: "User Created Successfully",
+            data: newUser
+        });
+
+    } catch(error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
     }
 
-    res.json(post);
+});
+
+
+// GET All Posts
+app.get("/posts", async (req, res) => {
+
+    try {
+
+        const posts = await Post.find().populate("authorId");
+
+        res.json({
+            success: true,
+            data: posts
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+});
+
+
+// GET Single Post
+app.get("/posts/:id", async (req, res) => {
+
+    try {
+
+        const post = await Post.findById(req.params.id).populate("authorId");
+
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            data: post
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
 
 });
 
 // CREATE Post
-app.post("/posts", (req, res) => {
+app.post("/posts", async (req, res) => {
 
-    const { title, content } = req.body;
+    try {
 
-    const newPost = {
-        id: posts.length + 1,
-        title,
-        content
-    };
+        const { title, content, authorId } = req.body;
 
-    posts.push(newPost);
-
-    res.status(201).json({
-        success: true,
-        message: "Post Created Successfully",
-        post: newPost
-    });
-
-});
-
-// UPDATE Post
-app.put("/posts/:id", (req, res) => {
-
-    const id = parseInt(req.params.id);
-
-    const { title, content } = req.body;
-
-    const post = posts.find(p => p.id === id);
-
-    if (!post) {
-        return res.status(404).json({
-            success: false,
-            message: "Post not found"
+        const newPost = await Post.create({
+            title,
+            content,
+            authorId
         });
+
+        res.status(201).json({
+            success: true,
+            message: "Post Created Successfully",
+            post: newPost
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
     }
 
-    post.title = title;
-    post.content = content;
-
-    res.json({
-        success: true,
-        message: "Post Updated Successfully",
-        post
-    });
-
 });
 
+
+
+// UPDATE Post
+
+app.put("/posts/:id", async (req, res) => {
+    try {
+
+        const { title, content } = req.body;
+
+        const updatedPost = await Post.findByIdAndUpdate(
+            req.params.id,
+            {
+                title,
+                content
+            },
+            {
+                new: true
+            }
+        );
+
+        if (!updatedPost) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Post Updated Successfully",
+            data: updatedPost
+        });
+
+
+    } catch(error) {
+
+        res.status(500).json({
+            success:false,
+            message:error.message
+        });
+
+    }
+});
+
+// TOP 3 RECENT POSTS (Aggregation)
+
+app.get("/posts/top/recent", async (req, res) => {
+
+    try {
+
+        const posts = await Post.aggregate([
+            {
+                $sort: {
+                    createdAt: -1
+                }
+            },
+            {
+                $limit: 3
+            }
+        ]);
+
+        res.json({
+            success: true,
+            message: "Top 3 Recent Posts",
+            data: posts
+        });
+
+
+    } catch(error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+});
 // DELETE Post
-app.delete("/posts/:id", (req, res) => {
+app.delete("/posts/:id", async (req,res)=>{
 
-    const id = parseInt(req.params.id);
+    try{
 
-    posts = posts.filter(p => p.id !== id);
+        const deletedPost = await Post.findByIdAndDelete(
+            req.params.id
+        );
 
-    res.json({
-        success: true,
-        message: "Post Deleted Successfully"
-    });
+
+        if(!deletedPost){
+            return res.status(404).json({
+                success:false,
+                message:"Post not found"
+            });
+        }
+
+
+        res.json({
+            success:true,
+            message:"Post Deleted Successfully",
+            data:deletedPost
+        });
+
+
+    }catch(error){
+
+        res.status(500).json({
+            success:false,
+            message:error.message
+        });
+
+    }
 
 });
+
 
 // Mock Login API
 app.post("/login", (req, res) => {
@@ -131,6 +288,7 @@ app.post("/login", (req, res) => {
     });
 
 });
+
 
 // Start Server
 app.listen(PORT, () => {

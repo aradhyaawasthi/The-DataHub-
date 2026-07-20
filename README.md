@@ -1,6 +1,6 @@
-# 🚀 The DataHub - REST API Server
+# 🚀 The DataHub - Full Stack REST API Server
 
-The DataHub is a Full Stack REST API project built using **Node.js** and **Express.js**. It provides CRUD operations for blog posts along with a mock login API. The project also includes a simple frontend dashboard and is deployed on Vercel.
+The DataHub is a Full Stack REST API project built using **Node.js**, **Express.js**, **MongoDB Atlas**, and **Mongoose**. It provides complete CRUD operations for blog posts, user management, MongoDB relationships, aggregation, and a mock login API. The project also includes a simple frontend dashboard and is deployed on Vercel.
 
 ## 🌐 Live Demo
 
@@ -12,23 +12,30 @@ The DataHub is a Full Stack REST API project built using **Node.js** and **Expre
 
 ---
 
-## ✨ Features
+# ✨ Features
 
 - RESTful API
+- MongoDB Atlas Database Integration
+- Mongoose ODM
 - Create, Read, Update and Delete (CRUD) Operations
+- User Management API
+- User & Post Relationship
+- Mongoose Populate
+- MongoDB Aggregation Pipeline
 - Mock Login API
 - Custom Middleware for HTTP Method & URL Logging
-- In-Memory Database
 - Frontend Dashboard
 - Thunder Client Tested
 - Vercel Deployment
 
 ---
 
-## 🛠️ Technologies Used
+# 🛠️ Technologies Used
 
 - Node.js
 - Express.js
+- MongoDB Atlas
+- Mongoose
 - JavaScript
 - HTML5
 - CSS3
@@ -38,45 +45,57 @@ The DataHub is a Full Stack REST API project built using **Node.js** and **Expre
 
 ---
 
-## 📌 API Endpoints
+# 📌 API Endpoints
 
-### Home
+## Home
 
 ```http
 GET /
 ```
 
-### Get All Posts
+## Get All Posts
 
 ```http
 GET /posts
 ```
 
-### Get Single Post
+## Get Single Post
 
 ```http
 GET /posts/:id
 ```
 
-### Create Post
+## Create Post
 
 ```http
 POST /posts
 ```
 
-### Update Post
+## Update Post
 
 ```http
 PUT /posts/:id
 ```
 
-### Delete Post
+## Delete Post
 
 ```http
 DELETE /posts/:id
 ```
 
-### Mock Login
+## Get Top 3 Recent Posts
+
+```http
+GET /posts/top/recent
+```
+
+## Create User
+
+```http
+POST /users
+```
+
+## Mock Login
 
 ```http
 POST /login
@@ -84,7 +103,7 @@ POST /login
 
 ---
 
-## 🔑 Mock Login Credentials
+# 🔑 Mock Login Credentials
 
 ```text
 Email:
@@ -96,28 +115,47 @@ Password:
 
 ---
 
-## 📋 Project Structure
+# 🗄️ Database Features
 
-```
+- MongoDB Atlas Integration
+- Mongoose Schema Design
+- User Schema
+- Post Schema
+- User-Post Relationship using ObjectId
+- Populate User Details
+- Aggregation Pipeline using:
+  - $sort
+  - $limit
+
+---
+
+# 📋 Project Structure
+
+```text
 The-DataHub
 │
-├── api
-│   └── index.js
+├── models
+│   ├── Post.js
+│   └── User.js
 │
 ├── public
 │   ├── index.html
 │   ├── style.css
 │   └── script.js
 │
+├── api
+│   └── index.js
+│
 ├── server.js
 ├── package.json
 ├── package-lock.json
-└── README.md
+├── README.md
+└── .env
 ```
 
 ---
 
-## ▶️ Run Locally
+# ▶️ Run Locally
 
 ```bash
 git clone https://github.com/aradhyaawasthi/The-DataHub-
@@ -126,7 +164,7 @@ cd The-DataHub-
 
 npm install
 
-npm start
+node server.js
 ```
 
 Server runs on:
@@ -137,22 +175,34 @@ http://localhost:5000
 
 ---
 
-## ✅ Testing
+# 🧪 Testing
 
 The API has been successfully tested using **Thunder Client**.
 
+Tested APIs:
+
+- ✅ Create User
+- ✅ Create Post
+- ✅ Get All Posts
+- ✅ Get Single Post
+- ✅ Update Post
+- ✅ Delete Post
+- ✅ Populate User Details
+- ✅ Aggregation Query
+- ✅ Mock Login API
+
 ---
 
-## 👩‍💻 Author
+# 👩‍💻 Author
 
 **Aradhya Awasthi**
 
-B.Tech CSE Student
+B.Tech Computer Science Engineering
 
 Kanpur Institute of Technology
 
 ---
 
-## 📜 License
+# 📜 License
 
 This project is created for educational and learning purposes.
