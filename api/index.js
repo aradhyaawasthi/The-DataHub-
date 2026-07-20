@@ -1,19 +1,25 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+require("dotenv").config();
+const mongoose = require("mongoose");
+
+const Post = require("../models/Post");
+const User = require("../models/User");
 
 const app = express();
+
+mongoose.connect(process.env.MONGODB_URI)
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log(err));
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
 
-let posts = [];
-
-// Middleware
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
-  next();
+    console.log(`${req.method} ${req.url}`);
+    next();
 });
 
 // Home
@@ -21,90 +27,207 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
-// Get All Posts
-app.get("/posts", (req, res) => {
-  res.json(posts);
+// CREATE USER
+app.post("/users", async (req, res) => {
+    try {
+
+        const { name, email } = req.body;
+
+        const user = await User.create({
+            name,
+            email
+        });
+
+        res.status(201).json({
+            success: true,
+            data: user
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
 });
 
-// Create Post
-app.post("/posts", (req, res) => {
+// GET ALL POSTS
+app.get("/posts", async (req, res) => {
 
-  const { title, content } = req.body;
+    try {
 
-  const newPost = {
-    id: Date.now(),
-    title,
-    content
-  };
+        const posts = await Post.find().populate("authorId");
 
-  posts.push(newPost);
+        res.json({
+            success: true,
+            data: posts
+        });
 
-  res.status(201).json({
-    success: true,
-    message: "Post Created Successfully",
-    post: newPost
-  });
+    } catch (error) {
 
-});
-// Get Single Post
-app.get("/posts/:id", (req, res) => {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
 
-  const id = parseInt(req.params.id);
-
-  const post = posts.find(p => p.id === id);
-
-  if (!post) {
-    return res.status(404).json({
-      success: false,
-      message: "Post not found"
-    });
-  }
-
-  res.json(post);
-
-});
-
-// Update Post
-app.put("/posts/:id", (req, res) => {
-
-  const id = parseInt(req.params.id);
-
-  const { title, content } = req.body;
-
-  const post = posts.find(p => p.id === id);
-
-  if (!post) {
-    return res.status(404).json({
-      success: false,
-      message: "Post not found"
-    });
-  }
-
-  post.title = title;
-  post.content = content;
-
-  res.json({
-    success: true,
-    message: "Post Updated Successfully",
-    post
-  });
+    }
 
 });
 
-// Delete Post
-app.delete("/posts/:id", (req, res) => {
+// TOP 3 RECENT POSTS
+app.get("/posts/top/recent", async (req, res) => {
 
-  const id = parseInt(req.params.id);
+    try {
 
-  posts = posts.filter(p => p.id !== id);
+        const posts = await Post.aggregate([
+            { $sort: { createdAt: -1 } },
+            { $limit: 3 }
+        ]);
 
-  res.json({
-    success: true,
-    message: "Post Deleted Successfully"
-  });
+        res.json({
+            success: true,
+            message: "Top 3 Recent Posts",
+            data: posts
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
 
 });
-// Mock Login API
+
+// GET SINGLE POST
+app.get("/posts/:id", async (req, res) => {
+
+    try {
+
+        const post = await Post.findById(req.params.id)
+            .populate("authorId");
+
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            data: post
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+});
+// CREATE POST
+app.post("/posts", async (req, res) => {
+    try {
+
+        const { title, content, authorId } = req.body;
+
+        const post = await Post.create({
+            title,
+            content,
+            authorId
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Post Created Successfully",
+            post
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+});
+
+// UPDATE POST
+app.put("/posts/:id", async (req, res) => {
+    try {
+
+        const { title, content } = req.body;
+
+        const updatedPost = await Post.findByIdAndUpdate(
+            req.params.id,
+            { title, content },
+            { new: true }
+        );
+
+        if (!updatedPost) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Post Updated Successfully",
+            data: updatedPost
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+});
+
+// DELETE POST
+app.delete("/posts/:id", async (req, res) => {
+
+    try {
+
+        const deletedPost = await Post.findByIdAndDelete(req.params.id);
+
+        if (!deletedPost) {
+            return res.status(404).json({
+                success: false,
+                message: "Post not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Post Deleted Successfully",
+            data: deletedPost
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+});
+
+// MOCK LOGIN
 app.post("/login", (req, res) => {
 
     const { email, password } = req.body;
@@ -124,5 +247,5 @@ app.post("/login", (req, res) => {
 
 });
 
-// Export App for Vercel
+// Export for Vercel
 module.exports = app;
