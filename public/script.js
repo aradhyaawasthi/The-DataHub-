@@ -4,7 +4,8 @@ const API_URL = "https://the-data-hub-delta.vercel.app/";
 async function loadPosts() {
     try {
         const res = await fetch(`${API_URL}/posts`);
-        const posts = await res.json();
+        const result = await res.json();
+const posts = result.data;
 
         const postsDiv = document.getElementById("posts");
         postsDiv.innerHTML = "";
